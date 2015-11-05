@@ -6,7 +6,7 @@ Looks like iTunes 12 uses a blurred version of the album cover now.  Here's a qu
 
     gm mogrify -size 320x320 -format blur.jpg -blur 240x240 album.jpg
 
-To use:
+To view a demo:
 
     $ go run main.go covers.html ~/album/*.jpg > index.html
 

@@ -4,7 +4,10 @@ package main
 
 import (
 	"html/template"
-	"image/jpeg"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"io/ioutil"
 	"log"
 	"os"
@@ -24,7 +27,7 @@ func analyzeFile(filename string) (bg, c1, c2, c3 colorart.Color) {
 		log.Fatal(err)
 	}
 
-	img, err := jpeg.Decode(file)
+	img, _, err := image.Decode(file)
 	if err != nil {
 		log.Fatal(os.Stderr, "%s: %v\n", "./cover.jpg", err)
 	}

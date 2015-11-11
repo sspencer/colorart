@@ -53,14 +53,14 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 	selectColors := NewCountedSet(1000)
 	for y := c.bounds.Min.Y; y < c.bounds.Max.Y; y++ {
 		for x := c.bounds.Min.X; x < c.bounds.Max.X; x++ {
-			imageColors.Add(RGBAToColor(c.img.At(x, y).RGBA()).String())
+			imageColors.AddRGBA(c.img.At(x, y).RGBA())
 		}
 	}
 
 	findDarkTextColor := !backgroundColor.IsDarkColor()
 
 	for _, key := range imageColors.Keys() {
-		curColor := StringToColor(key).ColorWithMinimumSaturation(0.15)
+		curColor := rgbToColor(key).ColorWithMinimumSaturation(0.15)
 		if curColor.IsDarkColor() == findDarkTextColor {
 			selectColors.AddCount(key, imageColors.Count(key))
 		}
@@ -69,7 +69,7 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 	sortedColors := selectColors.SortedSet()
 
 	for _, e := range sortedColors {
-		curColor := StringToColor(e.Name)
+		curColor := rgbToColor(e.Color)
 		if !primaryColor.set {
 			if curColor.IsContrastingColor(backgroundColor) {
 				primaryColor = curColor
@@ -103,14 +103,14 @@ func (c *colorArt) findEdgeColor() Color {
 	x0 := 0
 	x1 := c.bounds.Max.X - 1
 	for y := c.bounds.Min.Y; y < c.bounds.Max.Y; y++ {
-		edgeColors.Add(RGBAToColor(c.img.At(x0, y).RGBA()).String())
-		edgeColors.Add(RGBAToColor(c.img.At(x1, y).RGBA()).String())
+		edgeColors.AddRGBA(c.img.At(x0, y).RGBA())
+		edgeColors.AddRGBA(c.img.At(x1, y).RGBA())
 	}
 
 	sortedColors := edgeColors.SortedSet()
 
 	proposedEntry := sortedColors[0]
-	proposedColor := StringToColor(proposedEntry.Name)
+	proposedColor := rgbToColor(proposedEntry.Color)
 
 	// try another color if edge is close to black or white
 	if proposedColor.IsBlackOrWhite() {
@@ -123,7 +123,7 @@ func (c *colorArt) findEdgeColor() Color {
 			nextProposedEntry := e
 			// make sure second choice is 30% as common as first choice
 			if float32(nextProposedEntry.Count)/float32(proposedEntry.Count) > 0.3 {
-				nextProposedColor := StringToColor(nextProposedEntry.Name)
+				nextProposedColor := rgbToColor(nextProposedEntry.Color)
 				if !nextProposedColor.IsBlackOrWhite() {
 					proposedColor = nextProposedColor
 					break

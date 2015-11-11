@@ -2,9 +2,7 @@ package colorart
 
 import (
 	"fmt"
-	"log"
 	"math"
-	"strconv"
 )
 
 var (
@@ -32,31 +30,9 @@ func RGBAToColor(r, g, b, a uint32) Color {
 	return Color{float64(r) / fa, float64(g) / fa, float64(b) / fa, true}
 }
 
-// StringToColor converts hex string "#ff0033") to Color
-func StringToColor(str string) Color {
-
-	if str[0:1] == "#" {
-		str = str[1:]
-	}
-
-	if len(str) != 6 {
-		log.Fatal("Color is not parsable", str)
-	}
-
-	r, err := strconv.ParseInt(str[0:2], 16, 64)
-	if err != nil {
-		log.Fatal(err)
-	}
-	g, err := strconv.ParseInt(str[2:4], 16, 64)
-	if err != nil {
-		log.Fatal(err)
-	}
-	b, err := strconv.ParseInt(str[4:6], 16, 64)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return Color{float64(r) / 255.0, float64(g) / 255.0, float64(b) / 255.0, true}
+// StringToColor converts [3]byte array [0xff, 0x00, 0x33]) to Color
+func rgbToColor(c rgb) Color {
+	return Color{float64(c[0]) / 255.0, float64(c[1]) / 255.0, float64(c[2]) / 255.0, true}
 }
 
 // IsBlackOrWhite returns true if the color is within about 90% or black or white

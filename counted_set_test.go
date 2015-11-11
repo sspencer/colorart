@@ -4,18 +4,22 @@ import "testing"
 
 func TestSet(t *testing.T) {
 	s := NewCountedSet(10)
-	s.Add("One")
-	s.Add("Two")
-	s.Add("Two")
+	one := rgb{51, 102, 153}
+	two := rgb{153, 153, 153}
+	zero := rgb{10, 20, 30}
 
-	if s.Count("One") != 1 {
-		t.Error("Add: incorrect One count")
+	s.Add(one)
+	s.Add(two)
+	s.Add(two)
+
+	if s.Count(one) != 1 {
+		t.Error("Add: incorrect 'one' count")
 	}
-	if s.Count("Two") != 2 {
-		t.Error("Add: incorrect Two count")
+	if s.Count(two) != 2 {
+		t.Error("Add: incorrect 'two' count")
 	}
-	if s.Count("Zero") != 0 {
-		t.Error("Add: incorrect Zero count")
+	if s.Count(zero) != 0 {
+		t.Error("Add: incorrect 'zero' count")
 	}
 	if s.Size() != 2 {
 		// Only "One" and "Two" should be in Set
@@ -24,10 +28,10 @@ func TestSet(t *testing.T) {
 
 	var hasOne, hasTwo bool
 	for _, k := range s.Keys() {
-		if k == "One" {
+		if k == one {
 			hasOne = true
 		}
-		if k == "Two" {
+		if k == two {
 			hasTwo = true
 		}
 	}
@@ -45,17 +49,17 @@ func TestSet(t *testing.T) {
 		t.Error("Sorted set does not have enough elements")
 	}
 
-	if sorted[0].Name != "Two" && sorted[1].Name != "One" {
+	if sorted[0].Color != two && sorted[1].Color != one {
 		t.Error("Sorted set is not sorted")
 	}
 
-	s.Remove("Two")
-	if s.Count("Two") != 1 {
+	s.Remove(two)
+	if s.Count(two) != 1 {
 		t.Error("Remove: incorrect Count after Remove")
 	}
 
-	s.RemoveAll("Two")
-	if s.Count("Two") != 0 {
+	s.RemoveAll(two)
+	if s.Count(two) != 0 {
 		t.Error("Remove: incorrect Count after RemoveAll")
 	}
 	if s.Size() != 1 {
@@ -63,14 +67,13 @@ func TestSet(t *testing.T) {
 		t.Error("Size: incorrect Size after RemoveAll")
 	}
 
-	s.Remove("SomeRandomObject")
+	s.Remove(zero)
 	if s.Size() != 1 {
 		t.Error("Size: incorrect Size after Remove of unknown object")
 	}
 
-	s.RemoveAll("SomeOtherRandomObject")
+	s.RemoveAll(zero)
 	if s.Size() != 1 {
 		t.Error("Size: incorrect Size after Remove of unknown object")
 	}
-
 }

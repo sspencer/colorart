@@ -89,7 +89,8 @@ func (s *CountedSet) RemoveAll(color rgb) {
 
 // Keys returns all the colors in the set in unspecified order
 func (s *CountedSet) Keys() []rgb {
-	var keys []rgb
+	keys := make([]rgb, 0, len(s.m))
+
 	for k := range s.m {
 		keys = append(keys, k)
 	}

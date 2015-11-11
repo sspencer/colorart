@@ -98,7 +98,7 @@ func (s *CountedSet) Keys() []rgb {
 	return keys
 }
 
-// SortedSet returns the entries (Color, Count) order from greatest count to least
+// SortedSet returns the entries (Color, Count) ordered from greatest count to least
 func (s *CountedSet) SortedSet() []CountedEntry {
 	list := make([]CountedEntry, 0, len(s.m))
 

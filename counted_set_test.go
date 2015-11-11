@@ -2,7 +2,44 @@ package colorart
 
 import "testing"
 
-func TestSet(t *testing.T) {
+func TestAddRGBA(t *testing.T) {
+	s := NewCountedSet(10)
+	s.AddRGBA(2560, 5120, 7680, 65535)
+	entries := s.SortedSet()
+	e := entries[0]
+	str := e.String()
+	answer := "09131d: 1"
+	if str != answer {
+		t.Errorf("String conversion should be %s, not %s", answer, str)
+	}
+}
+
+func TestCount(t *testing.T) {
+	s := NewCountedSet(10)
+	one := rgb{51, 102, 153}
+
+	s.Add(one)
+	if s.Count(one) != 1 {
+		t.Error("Count should be 1")
+	}
+
+	s.Add(one)
+	if s.Count(one) != 2 {
+		t.Error("Count should be 2")
+	}
+
+	s.Add(one)
+	if s.Count(one) != 3 {
+		t.Error("Count should be 3")
+	}
+
+	if s.Size() != 1 {
+		// Only "one" and "two" should be in Set
+		t.Error("Size: incorrect Size after Add")
+	}
+}
+
+func TestMultiCount(t *testing.T) {
 	s := NewCountedSet(10)
 	one := rgb{51, 102, 153}
 	two := rgb{153, 153, 153}
@@ -22,9 +59,54 @@ func TestSet(t *testing.T) {
 		t.Error("Add: incorrect 'zero' count")
 	}
 	if s.Size() != 2 {
-		// Only "One" and "Two" should be in Set
+		// Only "one" and "two" should be in Set
 		t.Error("Size: incorrect Size after Add")
 	}
+}
+
+func TestRemove(t *testing.T) {
+	s := NewCountedSet(10)
+	one := rgb{51, 102, 153}
+	zero := rgb{5, 6, 7}
+
+	s.Add(one)
+	s.Add(one)
+
+	if s.Count(one) != 2 {
+		t.Error("Incorrect Count (should be 2)")
+	}
+
+	s.Remove(one)
+	if s.Count(one) != 1 {
+		t.Error("Incorrect Remove count (should be 1)")
+	}
+
+	s.Remove(one)
+	if s.Count(one) != 0 {
+		t.Error("Incorrect Remove count (should be 0)")
+	}
+
+	// remove key that's no longer there
+	s.Remove(one)
+	if s.Count(one) != 0 {
+		t.Error("Incorrect empty set Remove count (should be 0)")
+	}
+
+	// remove key that's never been there
+	s.Remove(zero)
+	if s.Count(zero) != 0 {
+		t.Error("Incorrect empty set Remove count (should be 0)")
+	}
+}
+
+func TestKeys(t *testing.T) {
+	s := NewCountedSet(10)
+	one := rgb{51, 102, 153}
+	two := rgb{153, 153, 153}
+
+	s.Add(one)
+	s.Add(two)
+	s.Add(two)
 
 	var hasOne, hasTwo bool
 	for _, k := range s.Keys() {
@@ -37,43 +119,100 @@ func TestSet(t *testing.T) {
 	}
 
 	if !hasOne {
-		t.Error("Iteration does not have One")
+		t.Error("Keys does not have One")
 	}
 
 	if !hasTwo {
-		t.Error("Iteration does not have Two")
+		t.Error("Keys does not have Two")
+	}
+}
+
+func TestSortedSet(t *testing.T) {
+	s := NewCountedSet(10)
+	one := rgb{51, 102, 153}
+	two := rgb{153, 153, 153}
+
+	s.Add(one)
+	s.Add(two)
+	s.Add(two)
+
+	entries := s.SortedSet()
+	if len(entries) != 2 {
+		t.Error("Sorted set returned incorrect number of elements")
 	}
 
-	sorted := s.SortedSet()
-	if len(sorted) != 2 {
-		t.Error("Sorted set does not have enough elements")
+	e := entries[0]
+	if e.Color != two && e.Count != 2 {
+		t.Error("First sorted entry (two) is incorrect")
 	}
 
-	if sorted[0].Color != two && sorted[1].Color != one {
-		t.Error("Sorted set is not sorted")
+	e = entries[1]
+	if e.Color != one && e.Count != 1 {
+		t.Error("First sorted entry (two) is incorrect")
+	}
+}
+
+func TestRemoveAll(t *testing.T) {
+	s := NewCountedSet(10)
+	one := rgb{51, 102, 153}
+	two := rgb{153, 153, 153}
+
+	s.Add(one)
+	s.Add(two)
+	s.Add(two)
+
+	if s.Count(two) != 2 {
+		t.Error("Incorrect count (before RemoveAll)")
 	}
 
-	s.Remove(two)
-	if s.Count(two) != 1 {
-		t.Error("Remove: incorrect Count after Remove")
+	if s.Size() != 2 {
+		t.Error("Incorrect size (before RemoveAll)")
 	}
 
+	// REMOVE ALL
 	s.RemoveAll(two)
+
 	if s.Count(two) != 0 {
-		t.Error("Remove: incorrect Count after RemoveAll")
-	}
-	if s.Size() != 1 {
-		// Only "One" and "Two" should be in Set
-		t.Error("Size: incorrect Size after RemoveAll")
+		t.Error("Incorrect count (after RemoveAll)")
 	}
 
-	s.Remove(zero)
 	if s.Size() != 1 {
-		t.Error("Size: incorrect Size after Remove of unknown object")
+		t.Error("Incorrect size (after RemoveAll)")
+	}
+}
+
+func TestAddCount(t *testing.T) {
+	s := NewCountedSet(10)
+	one := rgb{51, 102, 153}
+	two := rgb{153, 153, 153}
+
+	s.Add(one)
+	if s.Count(one) != 1 {
+		t.Error("Incorrect count before AddCount")
 	}
 
-	s.RemoveAll(zero)
-	if s.Size() != 1 {
-		t.Error("Size: incorrect Size after Remove of unknown object")
+	// does not add new count to old ... replaces old with new
+	s.AddCount(one, 108)
+	if s.Count(one) != 108 {
+		t.Error("Incorrect count after AddCount(1)")
+	}
+
+	s.AddCount(two, 23456)
+	if s.Count(two) != 23456 {
+		t.Error("Incorrect count after AddCount(2)")
+	}
+}
+
+func TestString(t *testing.T) {
+	s := NewCountedSet(10)
+	one := rgb{1, 102, 153}
+	s.Add(one)
+	entries := s.SortedSet()
+	e := entries[0]
+	str := e.String()
+
+	answer := "016699: 1"
+	if str != answer {
+		t.Errorf("String conversion should be %s, not %s", answer, str)
 	}
 }

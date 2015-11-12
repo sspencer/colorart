@@ -53,7 +53,7 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 	selectColors := NewCountedSet(1000)
 	for y := c.bounds.Min.Y; y < c.bounds.Max.Y; y++ {
 		for x := c.bounds.Min.X; x < c.bounds.Max.X; x++ {
-			imageColors.AddRGBA(c.img.At(x, y).RGBA())
+			imageColors.Add(RGBAToRGB(c.img.At(x, y).RGBA()))
 		}
 	}
 
@@ -103,8 +103,8 @@ func (c *colorArt) findEdgeColor() Color {
 	x0 := 0
 	x1 := c.bounds.Max.X - 1
 	for y := c.bounds.Min.Y; y < c.bounds.Max.Y; y++ {
-		edgeColors.AddRGBA(c.img.At(x0, y).RGBA())
-		edgeColors.AddRGBA(c.img.At(x1, y).RGBA())
+		edgeColors.Add(RGBAToRGB(c.img.At(x0, y).RGBA()))
+		edgeColors.Add(RGBAToRGB(c.img.At(x1, y).RGBA()))
 	}
 
 	sortedColors := edgeColors.SortedSet()

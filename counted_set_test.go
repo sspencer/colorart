@@ -2,18 +2,6 @@ package colorart
 
 import "testing"
 
-func TestAddRGBA(t *testing.T) {
-	s := NewCountedSet(10)
-	s.AddRGBA(2560, 5120, 7680, 65535)
-	entries := s.SortedSet()
-	e := entries[0]
-	str := e.String()
-	answer := "09131d: 1"
-	if str != answer {
-		t.Errorf("String conversion should be %s, not %s", answer, str)
-	}
-}
-
 func TestCount(t *testing.T) {
 	s := NewCountedSet(10)
 	one := rgb{51, 102, 153}
@@ -61,41 +49,6 @@ func TestMultiCount(t *testing.T) {
 	if s.Size() != 2 {
 		// Only "one" and "two" should be in Set
 		t.Error("Size: incorrect Size after Add")
-	}
-}
-
-func TestRemove(t *testing.T) {
-	s := NewCountedSet(10)
-	one := rgb{51, 102, 153}
-	zero := rgb{5, 6, 7}
-
-	s.Add(one)
-	s.Add(one)
-
-	if s.Count(one) != 2 {
-		t.Error("Incorrect Count (should be 2)")
-	}
-
-	s.Remove(one)
-	if s.Count(one) != 1 {
-		t.Error("Incorrect Remove count (should be 1)")
-	}
-
-	s.Remove(one)
-	if s.Count(one) != 0 {
-		t.Error("Incorrect Remove count (should be 0)")
-	}
-
-	// remove key that's no longer there
-	s.Remove(one)
-	if s.Count(one) != 0 {
-		t.Error("Incorrect empty set Remove count (should be 0)")
-	}
-
-	// remove key that's never been there
-	s.Remove(zero)
-	if s.Count(zero) != 0 {
-		t.Error("Incorrect empty set Remove count (should be 0)")
 	}
 }
 
@@ -149,35 +102,6 @@ func TestSortedSet(t *testing.T) {
 	e = entries[1]
 	if e.Color != one && e.Count != 1 {
 		t.Error("First sorted entry (two) is incorrect")
-	}
-}
-
-func TestRemoveAll(t *testing.T) {
-	s := NewCountedSet(10)
-	one := rgb{51, 102, 153}
-	two := rgb{153, 153, 153}
-
-	s.Add(one)
-	s.Add(two)
-	s.Add(two)
-
-	if s.Count(two) != 2 {
-		t.Error("Incorrect count (before RemoveAll)")
-	}
-
-	if s.Size() != 2 {
-		t.Error("Incorrect size (before RemoveAll)")
-	}
-
-	// REMOVE ALL
-	s.RemoveAll(two)
-
-	if s.Count(two) != 0 {
-		t.Error("Incorrect count (after RemoveAll)")
-	}
-
-	if s.Size() != 1 {
-		t.Error("Incorrect size (after RemoveAll)")
 	}
 }
 

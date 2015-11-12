@@ -7,6 +7,16 @@ import (
 
 type rgb [3]byte
 
+func RGBAToRGB(r, g, b, a uint32) rgb {
+	const max = 255
+	fa := float64(a)
+	ri := uint8(max * float64(r) / fa)
+	gi := uint8(max * float64(g) / fa)
+	bi := uint8(max * float64(b) / fa)
+
+	return rgb{ri, gi, bi}
+}
+
 // CountedEntry is for use by sorting class
 type CountedEntry struct {
 	Color rgb
@@ -44,18 +54,6 @@ func (s *CountedSet) Add(color rgb) {
 	s.m[color]++
 }
 
-// AddRGBA converts RGBA (0-65535) to [3]byte rgb and counts unique colors
-func (s *CountedSet) AddRGBA(r, g, b, a uint32) {
-	const max = 255
-	fa := float64(a)
-	ri := uint8(max * float64(r) / fa)
-	gi := uint8(max * float64(g) / fa)
-	bi := uint8(max * float64(b) / fa)
-
-	color := rgb{ri, gi, bi}
-	s.m[color]++
-}
-
 func (s *CountedSet) AddCount(color rgb, count int) {
 	s.m[color] = count
 }
@@ -68,23 +66,6 @@ func (s *CountedSet) Size() int {
 // Count returns the number of times the specified object has been added to the set.
 func (s *CountedSet) Count(color rgb) int {
 	return s.m[color]
-}
-
-// Remove decrements the number of times the specified object has been added to the set.
-func (s *CountedSet) Remove(color rgb) {
-	count, ok := s.m[color]
-	if ok {
-		if count > 1 {
-			s.m[color]--
-		} else {
-			delete(s.m, color)
-		}
-	}
-}
-
-// RemoveAll removes the specified object completely from the set (Count goes to 0)
-func (s *CountedSet) RemoveAll(color rgb) {
-	delete(s.m, color)
 }
 
 // Keys returns all the colors in the set in unspecified order

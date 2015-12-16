@@ -3,8 +3,7 @@ package colorart
 import "image"
 
 type colorArt struct {
-	img    image.Image
-	bounds image.Rectangle
+	img *pixelGetter
 }
 
 // resize image
@@ -12,8 +11,7 @@ type colorArt struct {
 
 func Analyze(img image.Image) (backgroundColor, primaryColor, secondaryColor, detailColor Color) {
 	c := &colorArt{}
-	c.img = img
-	c.bounds = img.Bounds()
+	c.img = newPixelGetter(img)
 
 	backgroundColor = c.findEdgeColor()
 	primaryColor, secondaryColor, detailColor = c.findTextColors(backgroundColor)
@@ -51,9 +49,9 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 
 	imageColors := NewCountedSet(2000)
 	selectColors := NewCountedSet(1000)
-	for y := c.bounds.Min.Y; y < c.bounds.Max.Y; y++ {
-		for x := c.bounds.Min.X; x < c.bounds.Max.X; x++ {
-			imageColors.AddRGBA(c.img.At(x, y).RGBA())
+	for y := c.img.imgBounds.Min.Y; y < c.img.imgBounds.Max.Y; y++ {
+		for x := c.img.imgBounds.Min.X; x < c.img.imgBounds.Max.X; x++ {
+			imageColors.AddPixel(c.img.getPixel(x, y))
 		}
 	}
 
@@ -100,11 +98,11 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 func (c *colorArt) findEdgeColor() Color {
 
 	edgeColors := NewCountedSet(500)
-	x0 := 0
-	x1 := c.bounds.Max.X - 1
-	for y := c.bounds.Min.Y; y < c.bounds.Max.Y; y++ {
-		edgeColors.AddRGBA(c.img.At(x0, y).RGBA())
-		edgeColors.AddRGBA(c.img.At(x1, y).RGBA())
+	x0 := c.img.imgBounds.Min.X
+	x1 := c.img.imgBounds.Max.X - 1
+	for y := c.img.imgBounds.Min.Y; y < c.img.imgBounds.Max.Y; y++ {
+		edgeColors.AddPixel(c.img.getPixel(x0, y))
+		edgeColors.AddPixel(c.img.getPixel(x1, y))
 	}
 
 	sortedColors := edgeColors.SortedSet()

@@ -45,12 +45,11 @@ func (s *CountedSet) Add(color rgb) {
 }
 
 // AddRGBA converts RGBA (0-65535) to [3]byte rgb and counts unique colors
-func (s *CountedSet) AddRGBA(r, g, b, a uint32) {
+func (s *CountedSet) AddPixel(p pixel) {
 	const max = 255
-	fa := float64(a)
-	ri := uint8(max * float64(r) / fa)
-	gi := uint8(max * float64(g) / fa)
-	bi := uint8(max * float64(b) / fa)
+	ri := uint8(max * p.R)
+	gi := uint8(max * p.G)
+	bi := uint8(max * p.B)
 
 	color := rgb{ri, gi, bi}
 	s.m[color]++

@@ -13,3 +13,6 @@ To view a demo:
 To speed things up, this code makes use of [GIFT](https://github.com/disintegration/gift) to resize images.  Also, the file "pixel.go"
 from that project was copied directly into the project to make getting
 pixels faster.
+
+    go get -u github.com/disintegration/gift
+

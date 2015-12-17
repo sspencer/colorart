@@ -1,6 +1,10 @@
 package colorart
 
-import "image"
+import (
+	"fmt"
+	"image"
+	"time"
+)
 
 type colorArt struct {
 	img *pixelGetter
@@ -48,25 +52,40 @@ func Analyze(img image.Image) (backgroundColor, primaryColor, secondaryColor, de
 func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondaryColor, detailColor Color) {
 
 	imageColors := NewCountedSet(2000)
-	selectColors := NewCountedSet(1000)
+	its := 0
+	start := time.Now()
 	for y := c.img.imgBounds.Min.Y; y < c.img.imgBounds.Max.Y; y++ {
 		for x := c.img.imgBounds.Min.X; x < c.img.imgBounds.Max.X; x++ {
 			imageColors.AddPixel(c.img.getPixel(x, y))
+			its++
 		}
 	}
-
+	fmt.Println("Iterations(1):", its, time.Since(start))
 	findDarkTextColor := !backgroundColor.IsDarkColor()
 
-	for _, key := range imageColors.Keys() {
-		curColor := rgbToColor(key).ColorWithMinimumSaturation(0.15)
-		if curColor.IsDarkColor() == findDarkTextColor {
-			selectColors.AddCount(key, imageColors.Count(key))
+	selectColors := NewCountedSet(1000)
+	its = 0
+	start = time.Now()
+
+	for key, cnt := range imageColors.m {
+		// don't bother unless there's more than a few of the same color
+		if cnt > 10 {
+			curColor := rgbToColor(key).ColorWithMinimumSaturation(0.15)
+			if curColor.IsDarkColor() == findDarkTextColor {
+				its++
+				selectColors.AddCount(key, imageColors.Count(key))
+				//fmt.Println(imageColors.Count(key))
+			}
 		}
 	}
+	fmt.Println("Iterations(2):", its, time.Since(start))
 
 	sortedColors := selectColors.SortedSet()
 
+	its = 0
+	start = time.Now()
 	for _, e := range sortedColors {
+		its++
 		curColor := rgbToColor(e.Color)
 		if !primaryColor.set {
 			if curColor.IsContrastingColor(backgroundColor) {
@@ -91,6 +110,7 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 			break
 		}
 	}
+	fmt.Println("Iterations(3):", its, time.Since(start))
 
 	return
 }

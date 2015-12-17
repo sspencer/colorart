@@ -30,7 +30,7 @@ func (c *Cover) String() string {
 		c.DetailColor)
 }
 
-func analyzeFile(filename string) (*Cover, error) {
+func analyzeFile(filename string, resize bool) (*Cover, error) {
 	file, err := os.Open(filename)
 
 	if err != nil {
@@ -39,33 +39,23 @@ func analyzeFile(filename string) (*Cover, error) {
 
 	defer file.Close()
 
-	src, _, err := image.Decode(file)
+	img, _, err := image.Decode(file)
 	if err != nil {
 		return nil, err
 	}
 
+	if resize {
+		start := time.Now()
+		g := gift.New(gift.Resize(500, 0, gift.LanczosResampling))
+		dst := image.NewRGBA(g.Bounds(img.Bounds()))
+		g.Draw(dst, img)
+		img = dst
+		fmt.Printf("- RESIZE %s took %s\n", path.Base(filename), time.Since(start))
+	}
+
 	start := time.Now()
-	g := gift.New(gift.Resize(500, 0, gift.LanczosResampling))
-	dst := image.NewRGBA(g.Bounds(src.Bounds()))
-	g.Draw(dst, src)
-	elapsed := time.Since(start)
-	log.Printf("RESIZE %s took %s", path.Base(filename), elapsed)
-
-	/*
-		out, err := os.Create(path.base(filename))
-		if err != nil {
-			return nil, err
-		}
-		defer out.Close()
-
-		// write new image to file
-		jpeg.Encode(out, dst, nil)
-	*/
-
-	start = time.Now()
-	bg, c1, c2, c3 := colorart.Analyze(dst)
-	elapsed = time.Since(start)
-	log.Printf("ANALYZE %s took %s", path.Base(filename), elapsed)
+	bg, c1, c2, c3 := colorart.Analyze(img)
+	fmt.Printf("- ANALYZE %s took %s\n", path.Base(filename), time.Since(start))
 
 	return &Cover{filename, bg.String(), c1.String(), c2.String(), c3.String()}, nil
 }
@@ -86,7 +76,7 @@ func main() {
 	*/
 
 	for i := 1; i < len(os.Args); i++ {
-		cover, err := analyzeFile(os.Args[i])
+		cover, err := analyzeFile(os.Args[i], false)
 		if err != nil {
 			log.Fatal(err)
 		}

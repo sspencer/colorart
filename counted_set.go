@@ -57,11 +57,19 @@ func (s *CountedSet) Add(color rgb) {
 // AddPixel converts pixel to [3]byte rgb and counts unique colors
 func (s *CountedSet) AddPixel(p pixel) {
 	const max = 255
+
+	/*
+		b := uint8(3)
+		ri := uint8(max*p.R) >> b << b
+		gi := uint8(max*p.G) >> b << b
+		bi := uint8(max*p.B) >> b << b
+	*/
 	ri := uint8(max * p.R)
 	gi := uint8(max * p.G)
 	bi := uint8(max * p.B)
 
 	color := rgb{ri, gi, bi}
+
 	s.m[color]++
 }
 
@@ -85,26 +93,16 @@ func (s *CountedSet) Count(color rgb) int {
 	return s.m[color]
 }
 
-/*
-
-// Keys returns all the colors in the set in unspecified order
-func (s *CountedSet) Keys() []rgb {
-	keys := make([]rgb, 0, len(s.m))
-
-	for k := range s.m {
-		keys = append(keys, k)
-	}
-
-	return keys
-}
-*/
-
 // SortedSet returns the entries (Color, Count) ordered from greatest count to least
 func (s *CountedSet) SortedSet() []CountedEntry {
-	list := make([]CountedEntry, 0, len(s.m))
+
+	list := make([]CountedEntry, 0)
 
 	for color, cnt := range s.m {
-		list = append(list, CountedEntry{color, cnt})
+		if cnt > 5 {
+			list = append(list, CountedEntry{color, cnt})
+		}
+
 	}
 
 	sort.Sort(ByCount(list))

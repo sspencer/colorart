@@ -1,10 +1,6 @@
 package colorart
 
-import (
-	"fmt"
-	"image"
-	"time"
-)
+import "image"
 
 type colorArt struct {
 	img *pixelGetter
@@ -50,42 +46,34 @@ func Analyze(img image.Image) (backgroundColor, primaryColor, secondaryColor, de
 }
 
 func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondaryColor, detailColor Color) {
-
-	imageColors := NewCountedSet(2000)
-	its := 0
-	start := time.Now()
-	for y := c.img.imgBounds.Min.Y; y < c.img.imgBounds.Max.Y; y++ {
-		for x := c.img.imgBounds.Min.X; x < c.img.imgBounds.Max.X; x++ {
-			imageColors.AddPixel(c.img.getPixel(x, y))
-			its++
+	b := c.img.imgBounds
+	imageColors := parallelize(b.Min.Y, b.Max.Y, func(ch chan *CountedSet, pmin, pmax int) {
+		b := c.img.imgBounds
+		colors := NewCountedSet(10000)
+		for y := pmin; y < pmax; y += 1 {
+			for x := b.Min.X; x < b.Max.X; x += 1 {
+				colors.AddPixel(c.img.getPixel(x, y))
+			}
 		}
-	}
-	fmt.Println("Iterations(1):", its, time.Since(start))
-	findDarkTextColor := !backgroundColor.IsDarkColor()
 
-	selectColors := NewCountedSet(1000)
-	its = 0
-	start = time.Now()
+		ch <- colors
+	})
+
+	useDarkTextColor := !backgroundColor.IsDarkColor()
+	selectColors := NewCountedSet(5000)
 
 	for key, cnt := range imageColors.m {
 		// don't bother unless there's more than a few of the same color
 		if cnt > 10 {
 			curColor := rgbToColor(key).ColorWithMinimumSaturation(0.15)
-			if curColor.IsDarkColor() == findDarkTextColor {
-				its++
-				selectColors.AddCount(key, imageColors.Count(key))
-				//fmt.Println(imageColors.Count(key))
+			if curColor.IsDarkColor() == useDarkTextColor {
+				selectColors.AddCount(key, cnt)
 			}
 		}
 	}
-	fmt.Println("Iterations(2):", its, time.Since(start))
 
 	sortedColors := selectColors.SortedSet()
-
-	its = 0
-	start = time.Now()
 	for _, e := range sortedColors {
-		its++
 		curColor := rgbToColor(e.Color)
 		if !primaryColor.set {
 			if curColor.IsContrastingColor(backgroundColor) {
@@ -110,7 +98,6 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 			break
 		}
 	}
-	fmt.Println("Iterations(3):", its, time.Since(start))
 
 	return
 }
@@ -118,9 +105,10 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 func (c *colorArt) findEdgeColor() Color {
 
 	edgeColors := NewCountedSet(500)
-	x0 := c.img.imgBounds.Min.X
-	x1 := c.img.imgBounds.Max.X - 1
-	for y := c.img.imgBounds.Min.Y; y < c.img.imgBounds.Max.Y; y++ {
+	b := c.img.imgBounds
+	x0 := b.Min.X
+	x1 := b.Max.X - 1
+	for y := b.Min.Y; y < b.Max.Y; y++ {
 		edgeColors.AddPixel(c.img.getPixel(x0, y))
 		edgeColors.AddPixel(c.img.getPixel(x1, y))
 	}

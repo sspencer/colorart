@@ -65,6 +65,12 @@ func (s *CountedSet) AddPixel(p pixel) {
 	s.m[color]++
 }
 
+func (s *CountedSet) Merge(o *CountedSet) {
+	for color, cnt := range o.m {
+		s.AddCount(color, cnt)
+	}
+}
+
 func (s *CountedSet) AddCount(color rgb, count int) {
 	s.m[color] = count
 }
@@ -79,6 +85,8 @@ func (s *CountedSet) Count(color rgb) int {
 	return s.m[color]
 }
 
+/*
+
 // Keys returns all the colors in the set in unspecified order
 func (s *CountedSet) Keys() []rgb {
 	keys := make([]rgb, 0, len(s.m))
@@ -89,6 +97,7 @@ func (s *CountedSet) Keys() []rgb {
 
 	return keys
 }
+*/
 
 // SortedSet returns the entries (Color, Count) ordered from greatest count to least
 func (s *CountedSet) SortedSet() []CountedEntry {

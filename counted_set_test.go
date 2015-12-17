@@ -66,32 +66,6 @@ func TestMultiCount(t *testing.T) {
 	}
 }
 
-func TestKeys(t *testing.T) {
-	s := NewCountedSet(10)
-
-	s.Add(one)
-	s.Add(two)
-	s.Add(two)
-
-	var hasOne, hasTwo bool
-	for _, k := range s.Keys() {
-		if k == one {
-			hasOne = true
-		}
-		if k == two {
-			hasTwo = true
-		}
-	}
-
-	if !hasOne {
-		t.Error("Keys does not have One")
-	}
-
-	if !hasTwo {
-		t.Error("Keys does not have Two")
-	}
-}
-
 func TestSortedSet(t *testing.T) {
 	s := NewCountedSet(10)
 

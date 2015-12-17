@@ -12,7 +12,13 @@ import (
 	"log"
 	"os"
 
+	"github.com/disintegration/gift"
 	"github.com/sspencer/colorart"
+)
+
+const (
+	ResizeThreshold = 250
+	ResizeSide      = 20
 )
 
 type Cover struct {
@@ -29,7 +35,15 @@ func analyzeFile(filename string) (bg, c1, c2, c3 colorart.Color) {
 
 	img, _, err := image.Decode(file)
 	if err != nil {
-		log.Fatal(os.Stderr, "%s: %v\n", "./cover.jpg", err)
+		log.Fatal(err)
+	}
+
+	b := img.Bounds()
+	if b.Max.X-b.Min.X > ResizeThreshold && b.Max.Y-b.Min.Y > ResizeThreshold {
+		g := gift.New(gift.Resize(ResizeSide, 0, gift.LanczosResampling))
+		dst := image.NewRGBA(image.Rect(0, 0, ResizeSide, ResizeSide))
+		g.Draw(dst, img)
+		img = dst
 	}
 
 	return colorart.Analyze(img)

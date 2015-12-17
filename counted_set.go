@@ -54,6 +54,17 @@ func (s *CountedSet) Add(color rgb) {
 	s.m[color]++
 }
 
+// AddPixel converts pixel to [3]byte rgb and counts unique colors
+func (s *CountedSet) AddPixel(p pixel) {
+	const max = 255
+	ri := uint8(max * p.R)
+	gi := uint8(max * p.G)
+	bi := uint8(max * p.B)
+
+	color := rgb{ri, gi, bi}
+	s.m[color]++
+}
+
 func (s *CountedSet) AddCount(color rgb, count int) {
 	s.m[color] = count
 }

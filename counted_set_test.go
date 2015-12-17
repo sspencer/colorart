@@ -2,9 +2,26 @@ package colorart
 
 import "testing"
 
+var (
+	zero = rgb{0, 100, 200}
+	one  = rgb{1, 11, 111}
+	two  = rgb{2, 22, 222}
+)
+
+func TestAddPixel(t *testing.T) {
+	s := NewCountedSet(10)
+	s.AddPixel(pixel{0.2, 0.4, 0.6, 1})
+	entries := s.SortedSet()
+	e := entries[0]
+	str := e.String()
+	answer := "336699: 1"
+	if str != answer {
+		t.Errorf("String conversion should be %s, not %s", answer, str)
+	}
+}
+
 func TestCount(t *testing.T) {
 	s := NewCountedSet(10)
-	one := rgb{51, 102, 153}
 
 	s.Add(one)
 	if s.Count(one) != 1 {
@@ -29,9 +46,6 @@ func TestCount(t *testing.T) {
 
 func TestMultiCount(t *testing.T) {
 	s := NewCountedSet(10)
-	one := rgb{51, 102, 153}
-	two := rgb{153, 153, 153}
-	zero := rgb{10, 20, 30}
 
 	s.Add(one)
 	s.Add(two)
@@ -54,8 +68,6 @@ func TestMultiCount(t *testing.T) {
 
 func TestKeys(t *testing.T) {
 	s := NewCountedSet(10)
-	one := rgb{51, 102, 153}
-	two := rgb{153, 153, 153}
 
 	s.Add(one)
 	s.Add(two)
@@ -82,8 +94,6 @@ func TestKeys(t *testing.T) {
 
 func TestSortedSet(t *testing.T) {
 	s := NewCountedSet(10)
-	one := rgb{51, 102, 153}
-	two := rgb{153, 153, 153}
 
 	s.Add(one)
 	s.Add(two)
@@ -107,8 +117,6 @@ func TestSortedSet(t *testing.T) {
 
 func TestAddCount(t *testing.T) {
 	s := NewCountedSet(10)
-	one := rgb{51, 102, 153}
-	two := rgb{153, 153, 153}
 
 	s.Add(one)
 	if s.Count(one) != 1 {
@@ -129,13 +137,13 @@ func TestAddCount(t *testing.T) {
 
 func TestString(t *testing.T) {
 	s := NewCountedSet(10)
-	one := rgb{1, 102, 153}
+
 	s.Add(one)
 	entries := s.SortedSet()
 	e := entries[0]
 	str := e.String()
 
-	answer := "016699: 1"
+	answer := "010b6f: 1"
 	if str != answer {
 		t.Errorf("String conversion should be %s, not %s", answer, str)
 	}

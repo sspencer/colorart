@@ -10,7 +10,9 @@ To view a demo:
 
     $ go run main.go covers.html ~/album/*.jpg > index.html
 
-To do:
+To speed things up, this code makes use of [GIFT](https://github.com/disintegration/gift) to resize images.  Also, the file "pixel.go"
+from that project was copied directly into the project to make getting
+pixels faster.
 
-    * scale image before calculating colors
-    * integrate into (my fork of) [imaginary](https://github.com/sspencer/imaginary).
+    go get -u github.com/disintegration/gift
+

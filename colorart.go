@@ -2,13 +2,25 @@ package colorart
 
 import "image"
 
+const (
+	// 1 to examine every pixel, 2 to skip every other pixel
+	loopSkipper = 2
+
+	// detune colors so colors within a few pixels of each other
+	// map to the same color.  Makes algorthim much faster.
+	// 0 is no change.
+	// 1 divides by 2, multiplies by 2
+	// 2 divides by 4, multiplies by 4
+	// 3 divides by 8, multiplies by 8
+	// Don't go much beyond 3...
+	colorShifter = 2
+)
+
 type colorArt struct {
 	img *pixelGetter
 }
 
-// resize image
-// https://github.com/nfnt/resize
-
+// Analyze an image for its main colors.
 func Analyze(img image.Image) (backgroundColor, primaryColor, secondaryColor, detailColor Color) {
 	c := &colorArt{}
 	c.img = newPixelGetter(img)
@@ -50,8 +62,8 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 	imageColors := parallelize(b.Min.Y, b.Max.Y, func(ch chan CountedSet, pmin, pmax int) {
 		b := c.img.imgBounds
 		colors := NewCountedSet(10000)
-		for y := pmin; y < pmax; y += 1 {
-			for x := b.Min.X; x < b.Max.X; x += 1 {
+		for y := pmin; y < pmax; y += loopSkipper {
+			for x := b.Min.X; x < b.Max.X; x += loopSkipper {
 				colors.AddPixel(c.img.getPixel(x, y))
 			}
 		}

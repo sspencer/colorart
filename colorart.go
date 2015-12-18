@@ -47,7 +47,7 @@ func Analyze(img image.Image) (backgroundColor, primaryColor, secondaryColor, de
 
 func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondaryColor, detailColor Color) {
 	b := c.img.imgBounds
-	imageColors := parallelize(b.Min.Y, b.Max.Y, func(ch chan *CountedSet, pmin, pmax int) {
+	imageColors := parallelize(b.Min.Y, b.Max.Y, func(ch chan CountedSet, pmin, pmax int) {
 		b := c.img.imgBounds
 		colors := NewCountedSet(10000)
 		for y := pmin; y < pmax; y += 1 {
@@ -62,7 +62,7 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 	useDarkTextColor := !backgroundColor.IsDarkColor()
 	selectColors := NewCountedSet(5000)
 
-	for key, cnt := range imageColors.m {
+	for key, cnt := range imageColors {
 		// don't bother unless there's more than a few of the same color
 
 		curColor := rgbToColor(key).ColorWithMinimumSaturation(0.15)

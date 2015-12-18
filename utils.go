@@ -5,10 +5,10 @@ import (
 	"sync/atomic"
 )
 
-type countedFn func(ch chan *CountedSet, pmin, pmax int)
+type countedFn func(ch chan CountedSet, pmin, pmax int)
 
 // parallelize data processing if 'enabled' is true
-func parallelize(datamin, datamax int, fn countedFn) *CountedSet {
+func parallelize(datamin, datamax int, fn countedFn) CountedSet {
 	datasize := datamax - datamin
 	partsize := datasize
 
@@ -29,7 +29,7 @@ func parallelize(datamin, datamax int, fn countedFn) *CountedSet {
 	}
 
 	idx := int64(datamin)
-	ch := make(chan *CountedSet, numGoroutines)
+	ch := make(chan CountedSet, numGoroutines)
 
 	for p := 0; p < numGoroutines; p++ {
 		go func() {

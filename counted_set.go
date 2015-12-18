@@ -26,26 +26,24 @@ func (e CountedEntry) String() string {
 
 // CountedSet counts the number of times each object (string) is added to the set.
 // The set is not thread safe.
-type CountedSet struct {
-	m map[rgb]int
-}
+
+type CountedSet map[rgb]int
 
 //---------------------------
 
 // NewCountedSet creates a new CountedSet of the specified size.
-func NewCountedSet(size int) *CountedSet {
-	s := &CountedSet{}
-	s.m = make(map[rgb]int, size)
+func NewCountedSet(size int) CountedSet {
+	s := make(map[rgb]int, size)
 	return s
 }
 
 // Add adds an object to the set.
-func (s *CountedSet) Add(color rgb) {
-	s.m[color]++
+func (s CountedSet) Add(color rgb) {
+	s[color]++
 }
 
 // AddPixel converts pixel to [3]byte rgb and counts unique colors
-func (s *CountedSet) AddPixel(p pixel) {
+func (s CountedSet) AddPixel(p pixel) {
 	const max = 255
 
 	/*
@@ -60,37 +58,37 @@ func (s *CountedSet) AddPixel(p pixel) {
 
 	color := rgb{ri, gi, bi}
 
-	s.m[color]++
+	s[color]++
 }
 
 // Merge other counted set into this one.
-func (s *CountedSet) Merge(o *CountedSet) {
-	for color, cnt := range o.m {
+func (s CountedSet) Merge(o CountedSet) {
+	for color, cnt := range o {
 		s.AddCount(color, cnt)
 	}
 }
 
 // Add color with count.
-func (s *CountedSet) AddCount(color rgb, count int) {
-	s.m[color] = count
+func (s CountedSet) AddCount(color rgb, count int) {
+	s[color] = count
 }
 
 // Size returns the number of objects in the set.
-func (s *CountedSet) Size() int {
-	return len(s.m)
+func (s CountedSet) Size() int {
+	return len(s)
 }
 
 // Count returns the number of times the specified object has been added to the set.
-func (s *CountedSet) Count(color rgb) int {
-	return s.m[color]
+func (s CountedSet) Count(color rgb) int {
+	return s[color]
 }
 
 // SortedSet returns the entries (Color, Count) ordered from greatest count to least
-func (s *CountedSet) SortedSet() []CountedEntry {
+func (s CountedSet) SortedSet() []CountedEntry {
 
-	list := make([]CountedEntry, len(s.m))
+	list := make([]CountedEntry, len(s))
 	it := 0
-	for color, cnt := range s.m {
+	for color, cnt := range s {
 		list[it] = CountedEntry{color, cnt}
 		it++
 	}

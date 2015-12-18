@@ -23,33 +23,33 @@ func TestAddPixel(t *testing.T) {
 func TestCount(t *testing.T) {
 	s := NewCountedSet(10)
 
-	s.Add(one)
+	s[one]++
 	if s.Count(one) != 1 {
 		t.Error("Count should be 1")
 	}
 
-	s.Add(one)
+	s[one]++
 	if s.Count(one) != 2 {
 		t.Error("Count should be 2")
 	}
 
-	s.Add(one)
+	s[one]++
 	if s.Count(one) != 3 {
 		t.Error("Count should be 3")
 	}
 
-	if s.Size() != 1 {
+	if len(s) != 1 {
 		// Only "one" and "two" should be in Set
-		t.Error("Size: incorrect Size after Add")
+		t.Error("len: incorrect size after Add")
 	}
 }
 
 func TestMultiCount(t *testing.T) {
 	s := NewCountedSet(10)
 
-	s.Add(one)
-	s.Add(two)
-	s.Add(two)
+	s[one]++
+	s[two]++
+	s[two]++
 
 	if s.Count(one) != 1 {
 		t.Error("Add: incorrect 'one' count")
@@ -60,18 +60,18 @@ func TestMultiCount(t *testing.T) {
 	if s.Count(zero) != 0 {
 		t.Error("Add: incorrect 'zero' count")
 	}
-	if s.Size() != 2 {
+	if len(s) != 2 {
 		// Only "one" and "two" should be in Set
-		t.Error("Size: incorrect Size after Add")
+		t.Error("len: incorrect size after Add")
 	}
 }
 
 func TestSortedSet(t *testing.T) {
 	s := NewCountedSet(10)
 
-	s.Add(one)
-	s.Add(two)
-	s.Add(two)
+	s[one]++
+	s[two]++
+	s[two]++
 
 	entries := s.SortedSet()
 	if len(entries) != 2 {
@@ -92,14 +92,14 @@ func TestSortedSet(t *testing.T) {
 func TestAddCount(t *testing.T) {
 	s := NewCountedSet(10)
 
-	s.Add(one)
+	s[one]++
 	if s.Count(one) != 1 {
 		t.Error("Incorrect count before AddCount")
 	}
 
 	// does not add new count to old ... replaces old with new
 	s.AddCount(one, 108)
-	if s.Count(one) != 108 {
+	if s.Count(one) != 109 {
 		t.Error("Incorrect count after AddCount(1)")
 	}
 
@@ -112,7 +112,7 @@ func TestAddCount(t *testing.T) {
 func TestString(t *testing.T) {
 	s := NewCountedSet(10)
 
-	s.Add(one)
+	s[one]++
 	entries := s.SortedSet()
 	e := entries[0]
 	str := e.String()

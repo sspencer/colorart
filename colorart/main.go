@@ -17,11 +17,11 @@ import (
 )
 
 const (
-	ResizeThreshold = 250
-	ResizeSide      = 20
+	resizeThreshold = 210
+	resizeSize      = 200
 )
 
-type Cover struct {
+type cover struct {
 	Filename, BackgroundColor, PrimaryColor, SecondaryColor, DetailColor string
 }
 
@@ -39,9 +39,9 @@ func analyzeFile(filename string) (bg, c1, c2, c3 colorart.Color) {
 	}
 
 	b := img.Bounds()
-	if b.Max.X-b.Min.X > ResizeThreshold && b.Max.Y-b.Min.Y > ResizeThreshold {
-		g := gift.New(gift.Resize(ResizeSide, 0, gift.LanczosResampling))
-		dst := image.NewRGBA(image.Rect(0, 0, ResizeSide, ResizeSide))
+	if b.Max.X-b.Min.X > resizeThreshold || b.Max.Y-b.Min.Y > resizeThreshold {
+		g := gift.New(gift.Resize(resizeSize, 0, gift.LanczosResampling))
+		dst := image.NewRGBA(image.Rect(0, 0, resizeSize, resizeSize))
 		g.Draw(dst, img)
 		img = dst
 	}
@@ -62,11 +62,11 @@ func main() {
 
 	t, err := template.New("webpage").Parse(string(tpl))
 
-	covers := make([]Cover, 0, len(os.Args)-2)
+	covers := make([]cover, 0, len(os.Args)-2)
 
 	for i := 2; i < len(os.Args); i++ {
 		bg, c1, c2, c3 := analyzeFile(os.Args[i])
-		covers = append(covers, Cover{os.Args[i], bg.String(), c1.String(), c2.String(), c3.String()})
+		covers = append(covers, cover{os.Args[i], bg.String(), c1.String(), c2.String(), c3.String()})
 	}
 
 	err = t.Execute(os.Stdout, covers)

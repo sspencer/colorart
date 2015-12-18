@@ -64,12 +64,12 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 
 	for key, cnt := range imageColors.m {
 		// don't bother unless there's more than a few of the same color
-		if cnt > 10 {
-			curColor := rgbToColor(key).ColorWithMinimumSaturation(0.15)
-			if curColor.IsDarkColor() == useDarkTextColor {
-				selectColors.AddCount(key, cnt)
-			}
+
+		curColor := rgbToColor(key).ColorWithMinimumSaturation(0.15)
+		if curColor.IsDarkColor() == useDarkTextColor {
+			selectColors.AddCount(key, cnt)
 		}
+
 	}
 
 	sortedColors := selectColors.SortedSet()

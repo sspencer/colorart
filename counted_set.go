@@ -7,16 +7,6 @@ import (
 
 type rgb [3]byte
 
-func RGBAToRGB(r, g, b, a uint32) rgb {
-	const max = 255
-	fa := float64(a)
-	ri := uint8(max * float64(r) / fa)
-	gi := uint8(max * float64(g) / fa)
-	bi := uint8(max * float64(b) / fa)
-
-	return rgb{ri, gi, bi}
-}
-
 // CountedEntry is for use by sorting class
 type CountedEntry struct {
 	Color rgb
@@ -73,12 +63,14 @@ func (s *CountedSet) AddPixel(p pixel) {
 	s.m[color]++
 }
 
+// Merge other counted set into this one.
 func (s *CountedSet) Merge(o *CountedSet) {
 	for color, cnt := range o.m {
 		s.AddCount(color, cnt)
 	}
 }
 
+// Add color with count.
 func (s *CountedSet) AddCount(color rgb, count int) {
 	s.m[color] = count
 }
@@ -96,13 +88,11 @@ func (s *CountedSet) Count(color rgb) int {
 // SortedSet returns the entries (Color, Count) ordered from greatest count to least
 func (s *CountedSet) SortedSet() []CountedEntry {
 
-	list := make([]CountedEntry, 0)
-
+	list := make([]CountedEntry, len(s.m))
+	it := 0
 	for color, cnt := range s.m {
-		if cnt > 5 {
-			list = append(list, CountedEntry{color, cnt})
-		}
-
+		list[it] = CountedEntry{color, cnt}
+		it++
 	}
 
 	sort.Sort(ByCount(list))

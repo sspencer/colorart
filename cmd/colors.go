@@ -76,7 +76,7 @@ func main() {
 	*/
 
 	for i := 1; i < len(os.Args); i++ {
-		cover, err := analyzeFile(os.Args[i], false)
+		cover, err := analyzeFile(os.Args[i], true)
 		if err != nil {
 			log.Fatal(err)
 		}

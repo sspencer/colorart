@@ -3,6 +3,7 @@ package main
 //
 
 import (
+	"flag"
 	"fmt"
 	"image"
 	_ "image/gif"
@@ -11,17 +12,45 @@ import (
 	"log"
 	"os"
 	"path"
-	"time"
+	"text/template"
 
 	"github.com/disintegration/gift"
 	"github.com/sspencer/colorart"
 )
 
-type Cover struct {
-	Filename, BackgroundColor, PrimaryColor, SecondaryColor, DetailColor string
+const (
+	doResizeImage   = true
+	resizeThreshold = 210
+	resizeSize      = 200
+	tmpl            = `
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Cover Art</title>
+</head>
+<body>
+{{range .}}
+<div style="background:{{.BackgroundColor}};height:240px;margin:4px;padding:4px">
+	<img width="240" height="240" style="float:right" src="file://{{.Filename}}">
+	<h1 style="color:{{.PrimaryColor}}">Primary Color</h1>
+	<h2 style="color:{{.SecondaryColor}}">Secondary Color</h2>
+	<h3 style="color:{{.DetailColor}}">Detail Color</h3>
+</div>
+{{end}}
+</body>
+</html>
+`
+)
+
+type cover struct {
+	Filename        string
+	BackgroundColor colorart.Color
+	PrimaryColor    colorart.Color
+	SecondaryColor  colorart.Color
+	DetailColor     colorart.Color
 }
 
-func (c *Cover) String() string {
+func (c *cover) String() string {
 	return fmt.Sprintf("%s: bg=%s, primary=%s, secondary=%s, detail=%s",
 		path.Base(c.Filename),
 		c.BackgroundColor,
@@ -30,57 +59,73 @@ func (c *Cover) String() string {
 		c.DetailColor)
 }
 
-func analyzeFile(filename string, resize bool) (*Cover, error) {
+func analyzeFile(filename string) cover {
 	file, err := os.Open(filename)
 
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
 	defer file.Close()
 
 	img, _, err := image.Decode(file)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
-	if resize {
-		start := time.Now()
-		g := gift.New(gift.Resize(500, 0, gift.LanczosResampling))
-		dst := image.NewRGBA(g.Bounds(img.Bounds()))
+	b := img.Bounds()
+	if doResizeImage && (b.Max.X-b.Min.X > resizeThreshold || b.Max.Y-b.Min.Y > resizeThreshold) {
+		g := gift.New(gift.Resize(resizeSize, 0, gift.LanczosResampling))
+		dst := image.NewRGBA(image.Rect(0, 0, resizeSize, resizeSize))
 		g.Draw(dst, img)
 		img = dst
-		fmt.Printf("- RESIZE %s took %s\n", path.Base(filename), time.Since(start))
 	}
 
-	start := time.Now()
-	bg, c1, c2, c3 := colorart.Analyze(img)
-	fmt.Printf("- ANALYZE %s took %s\n", path.Base(filename), time.Since(start))
+	c := colorart.Analyze(img)
 
-	return &Cover{filename, bg.String(), c1.String(), c2.String(), c3.String()}, nil
+	return cover{filename, c.BackgroundColor, c.PrimaryColor, c.SecondaryColor, c.DetailColor}
+}
+
+func generateHtml(args []string) {
+	t, err := template.New("webpage").Parse(string(tmpl))
+	if err != nil {
+		log.Fatalf("Error parsing template")
+	}
+
+	covers := make([]cover, 0, len(args))
+
+	for _, arg := range args {
+		cover := analyzeFile(arg)
+		covers = append(covers, cover)
+	}
+
+	err = t.Execute(os.Stdout, covers)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func generateText(args []string) {
+	for _, arg := range args {
+		cover := analyzeFile(arg)
+		fmt.Println(cover)
+	}
 }
 
 func main() {
 
-	if len(os.Args) < 2 {
-		log.Fatalf("%s <img 1> <img 2> ... <img n>\n", os.Args[0])
+	htmlPtr := flag.Bool("html", false, "html output")
+
+	flag.Parse()
+	args := flag.Args()
+
+	if len(args) < 1 {
+		log.Fatalf("%s [-html] <img 1> <img 2> ... <img n>\n", os.Args[0])
 	}
 
-	/*
-		f, err := os.Create("./cpu.prof")
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	*/
-
-	for i := 1; i < len(os.Args); i++ {
-		cover, err := analyzeFile(os.Args[i], true)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Println(cover)
+	if *htmlPtr == true {
+		generateHtml(args)
+	} else {
+		generateText(args)
 	}
 }

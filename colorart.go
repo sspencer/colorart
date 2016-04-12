@@ -16,19 +16,24 @@ const (
 	colorShifter = 2
 )
 
+// Colors is the return struct from Analyze.
+type Colors struct {
+	BackgroundColor, PrimaryColor, SecondaryColor, DetailColor Color
+}
+
 type colorArt struct {
 	img *pixelGetter
 }
 
 // Analyze an image for its main colors.
-func Analyze(img image.Image) (backgroundColor, primaryColor, secondaryColor, detailColor Color) {
+func Analyze(img image.Image) Colors {
 	c := &colorArt{}
 	c.img = newPixelGetter(img)
 
-	backgroundColor = c.findEdgeColor()
-	primaryColor, secondaryColor, detailColor = c.findTextColors(backgroundColor)
+	backgroundColor := c.findEdgeColor()
+	primaryColor, secondaryColor, detailColor := c.findTextColors(backgroundColor)
 
-	darkBackground := backgroundColor.IsDarkColor()
+	darkBackground := backgroundColor.isDarkColor()
 
 	if !primaryColor.set {
 		if darkBackground {
@@ -54,7 +59,12 @@ func Analyze(img image.Image) (backgroundColor, primaryColor, secondaryColor, de
 		}
 	}
 
-	return
+	return Colors{
+		backgroundColor,
+		primaryColor,
+		secondaryColor,
+		detailColor,
+	}
 }
 
 func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondaryColor, detailColor Color) {
@@ -71,14 +81,14 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 		ch <- colors
 	})
 
-	useDarkTextColor := !backgroundColor.IsDarkColor()
+	useDarkTextColor := !backgroundColor.isDarkColor()
 	selectColors := NewCountedSet(5000)
 
 	for key, cnt := range imageColors {
 		// don't bother unless there's more than a few of the same color
 
-		curColor := rgbToColor(key).ColorWithMinimumSaturation(0.15)
-		if curColor.IsDarkColor() == useDarkTextColor {
+		curColor := rgbToColor(key).colorWithMinimumSaturation(0.15)
+		if curColor.isDarkColor() == useDarkTextColor {
 			selectColors.AddCount(key, cnt)
 		}
 
@@ -88,19 +98,19 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 	for _, e := range sortedColors {
 		curColor := rgbToColor(e.Color)
 		if !primaryColor.set {
-			if curColor.IsContrastingColor(backgroundColor) {
+			if curColor.isContrastingColor(backgroundColor) {
 				primaryColor = curColor
 			}
 		} else if !secondaryColor.set {
-			if !primaryColor.IsDistinctColor(curColor) || !curColor.IsContrastingColor(backgroundColor) {
+			if !primaryColor.isDistinctColor(curColor) || !curColor.isContrastingColor(backgroundColor) {
 				continue
 			}
 			secondaryColor = curColor
 
 		} else if !detailColor.set {
-			if !secondaryColor.IsDistinctColor(curColor) ||
-				!primaryColor.IsDistinctColor(curColor) ||
-				!curColor.IsContrastingColor(backgroundColor) {
+			if !secondaryColor.isDistinctColor(curColor) ||
+				!primaryColor.isDistinctColor(curColor) ||
+				!curColor.isContrastingColor(backgroundColor) {
 				continue
 			}
 			detailColor = curColor
@@ -131,7 +141,7 @@ func (c *colorArt) findEdgeColor() Color {
 	proposedColor := rgbToColor(proposedEntry.Color)
 
 	// try another color if edge is close to black or white
-	if proposedColor.IsBlackOrWhite() {
+	if proposedColor.isBlackOrWhite() {
 		for i, e := range sortedColors {
 			if i == 0 {
 				// first entry is already set as "proposedEntry"
@@ -142,7 +152,7 @@ func (c *colorArt) findEdgeColor() Color {
 			// make sure second choice is 30% as common as first choice
 			if float32(nextProposedEntry.Count)/float32(proposedEntry.Count) > 0.3 {
 				nextProposedColor := rgbToColor(nextProposedEntry.Color)
-				if !nextProposedColor.IsBlackOrWhite() {
+				if !nextProposedColor.isBlackOrWhite() {
 					proposedColor = nextProposedColor
 					break
 				}

@@ -1,0 +1,6 @@
+hash: 11e126605a8b3975afbde3dfe9c899628926584480ff383524dd2826d7aab663
+updated: 2016-04-11T17:57:05.864287627-07:00
+imports:
+- name: github.com/disintegration/gift
+  version: 703be73d60d8baeaa84c47be0d31551b466ea84a
+devImports: []

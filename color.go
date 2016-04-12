@@ -13,7 +13,8 @@ var (
 	WhiteColor = Color{1, 1, 1, true}
 )
 
-// Color holds rgb components of a color
+// Color holds rgb components of a color where each component is a float
+// between 0.0 and 1.0.
 type Color struct {
 	R, G, B float64
 	set     bool
@@ -24,32 +25,26 @@ func (c Color) String() string {
 	return fmt.Sprintf("#%02x%02x%02x", uint8(c.R*255), uint8(c.G*255), uint8(c.B*255))
 }
 
-// RGBAToColor converts 16bit RGBA (0-65535) color into a Color (0.0 < rgb component < 1.0)
-func RGBAToColor(r, g, b, a uint32) Color {
-	fa := float64(a)
-	return Color{float64(r) / fa, float64(g) / fa, float64(b) / fa, true}
-}
-
-// StringToColor converts [3]byte array [0xff, 0x00, 0x33]) to Color
+// rgbToColor converts [3]byte array [0xff, 0x00, 0x33]) to Color
 func rgbToColor(c rgb) Color {
 	return Color{float64(c[0]) / 255.0, float64(c[1]) / 255.0, float64(c[2]) / 255.0, true}
 }
 
-// IsBlackOrWhite returns true if the color is within about 90% or black or white
-func (c Color) IsBlackOrWhite() bool {
+// isBlackOrWhite returns true if the color is within about 90% or black or white
+func (c Color) isBlackOrWhite() bool {
 	return (c.R > 0.91 && c.G > 0.91 && c.B >= 0.91) || (c.R < 0.09 && c.G < 0.09 && c.B < 0.09)
 }
 
-// IsDarkColor returns true for dark colors
-func (c Color) IsDarkColor() bool {
+// isDarkColor returns true for dark colors
+func (c Color) isDarkColor() bool {
 
 	lum := 0.2126*c.R + 0.7152*c.G + 0.0722*c.B
 
 	return lum < 0.5
 }
 
-// IsDistinctColor uses a minimum threshold to determine if two colors are distinct
-func (c Color) IsDistinctColor(d Color) bool {
+// isDistinctColor uses a minimum threshold to determine if two colors are distinct
+func (c Color) isDistinctColor(d Color) bool {
 	threshold := 0.25
 	if math.Abs(c.R-d.R) > threshold || math.Abs(c.G-d.G) > threshold || math.Abs(c.B-d.B) > threshold {
 
@@ -67,8 +62,8 @@ func (c Color) IsDistinctColor(d Color) bool {
 	return false
 }
 
-// IsContrastingColor determines if two colors are contrasting
-func (c Color) IsContrastingColor(d Color) bool {
+// isContrastingColor determines if two colors are contrasting
+func (c Color) isContrastingColor(d Color) bool {
 
 	bLum := 0.2126*c.R + 0.7152*c.G + 0.0722*c.B
 	fLum := 0.2126*d.R + 0.7152*d.G + 0.0722*d.B
@@ -84,20 +79,20 @@ func (c Color) IsContrastingColor(d Color) bool {
 	return contrast > 1.6
 }
 
-// ColorWithMinimumSaturation tries to return a less saturated color
-func (c Color) ColorWithMinimumSaturation(minSaturation float64) Color {
+// colorWithMinimumSaturation tries to return a less saturated color
+func (c Color) colorWithMinimumSaturation(minSaturation float64) Color {
 
-	h, s, v := c.HSV()
+	h, s, v := c.hsv()
 	if s < minSaturation {
-		return HSVToColor(h, minSaturation, v)
+		return hsvToColor(h, minSaturation, v)
 	}
 
 	return c
 }
 
-// HSV converts color into HSV
+// hsv converts color into HSV
 // Ported from http://goo.gl/Vg1h9
-func (c Color) HSV() (h, s, v float64) {
+func (c Color) hsv() (h, s, v float64) {
 
 	max := math.Max(math.Max(c.R, c.G), c.B)
 	min := math.Min(math.Min(c.R, c.G), c.B)
@@ -130,7 +125,7 @@ func (c Color) HSV() (h, s, v float64) {
 // HSVToColor converts an HSV triple to a (RGB) color.
 //
 // Ported from http://goo.gl/Vg1h9
-func HSVToColor(h, s, v float64) Color {
+func hsvToColor(h, s, v float64) Color {
 	var r, g, b float64
 	i := math.Floor(h * 6)
 	f := h*6 - i

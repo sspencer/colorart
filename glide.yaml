@@ -1,3 +1,0 @@
-package: github.com/sspencer/colorart
-import:
-- package: github.com/disintegration/gift

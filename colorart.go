@@ -2,20 +2,6 @@ package colorart
 
 import "image"
 
-const (
-	// 1 to examine every pixel, 2 to skip every other pixel
-	loopSkipper = 2
-
-	// detune colors so colors within a few pixels of each other
-	// map to the same color.  Makes algorthim much faster.
-	// 0 is no change.
-	// 1 divides by 2, multiplies by 2
-	// 2 divides by 4, multiplies by 4
-	// 3 divides by 8, multiplies by 8
-	// Don't go much beyond 3...
-	colorShifter = 2
-)
-
 // Colors is the return struct from Analyze.
 type Colors struct {
 	BackgroundColor, PrimaryColor, SecondaryColor, DetailColor Color
@@ -26,12 +12,17 @@ type colorArt struct {
 }
 
 // Analyze an image for its main colors.
-func Analyze(img image.Image) Colors {
+// 1 to examine every pixel, 2 to skip every other pixel
+
+func Analyze(img image.Image, colorShift int, loopSkip int) Colors {
 	c := &colorArt{}
 	c.img = newPixelGetter(img)
 
-	backgroundColor := c.findEdgeColor()
-	primaryColor, secondaryColor, detailColor := c.findTextColors(backgroundColor)
+	colorShift = minMax(colorShift, 0, 8)
+	loopSkip = minMax(loopSkip, 1, 8)
+
+	backgroundColor := c.findEdgeColor(colorShift)
+	primaryColor, secondaryColor, detailColor := c.findImageColors(backgroundColor, colorShift, loopSkip)
 
 	darkBackground := backgroundColor.isDarkColor()
 
@@ -67,14 +58,14 @@ func Analyze(img image.Image) Colors {
 	}
 }
 
-func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondaryColor, detailColor Color) {
+func (c *colorArt) findImageColors(backgroundColor Color, colorShift int, loopSkip int) (primaryColor, secondaryColor, detailColor Color) {
 	b := c.img.imgBounds
-	imageColors := parallelize(b.Min.Y, b.Max.Y, func(ch chan CountedSet, pmin, pmax int) {
+	imageColors := parallelize(b.Min.Y, b.Max.Y, func(ch chan countedSet, pmin, pmax int) {
 		b := c.img.imgBounds
-		colors := NewCountedSet(10000)
-		for y := pmin; y < pmax; y += loopSkipper {
-			for x := b.Min.X; x < b.Max.X; x += loopSkipper {
-				colors.AddPixel(c.img.getPixel(x, y))
+		colors := newCountedSet(10000, colorShift)
+		for y := pmin; y < pmax; y += loopSkip {
+			for x := b.Min.X; x < b.Max.X; x += loopSkip {
+				colors.addPixel(c.img.getPixel(x, y))
 			}
 		}
 
@@ -82,21 +73,21 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 	})
 
 	useDarkTextColor := !backgroundColor.isDarkColor()
-	selectColors := NewCountedSet(5000)
+	selectColors := newCountedSet(5000, colorShift)
 
-	for key, cnt := range imageColors {
+	for key, cnt := range imageColors.set {
 		// don't bother unless there's more than a few of the same color
 
 		curColor := rgbToColor(key).colorWithMinimumSaturation(0.15)
 		if curColor.isDarkColor() == useDarkTextColor {
-			selectColors.AddCount(key, cnt)
+			selectColors.addCount(key, cnt)
 		}
 
 	}
 
-	sortedColors := selectColors.SortedSet()
+	sortedColors := selectColors.sortedSet()
 	for _, e := range sortedColors {
-		curColor := rgbToColor(e.Color)
+		curColor := rgbToColor(e.color)
 		if !primaryColor.set {
 			if curColor.isContrastingColor(backgroundColor) {
 				primaryColor = curColor
@@ -124,21 +115,21 @@ func (c *colorArt) findTextColors(backgroundColor Color) (primaryColor, secondar
 	return
 }
 
-func (c *colorArt) findEdgeColor() Color {
+func (c *colorArt) findEdgeColor(colorShift int) Color {
 
-	edgeColors := NewCountedSet(500)
+	edgeColors := newCountedSet(500, colorShift)
 	b := c.img.imgBounds
 	x0 := b.Min.X
 	x1 := b.Max.X - 1
 	for y := b.Min.Y; y < b.Max.Y; y++ {
-		edgeColors.AddPixel(c.img.getPixel(x0, y))
-		edgeColors.AddPixel(c.img.getPixel(x1, y))
+		edgeColors.addPixel(c.img.getPixel(x0, y))
+		edgeColors.addPixel(c.img.getPixel(x1, y))
 	}
 
-	sortedColors := edgeColors.SortedSet()
+	sortedColors := edgeColors.sortedSet()
 
 	proposedEntry := sortedColors[0]
-	proposedColor := rgbToColor(proposedEntry.Color)
+	proposedColor := rgbToColor(proposedEntry.color)
 
 	// try another color if edge is close to black or white
 	if proposedColor.isBlackOrWhite() {
@@ -150,8 +141,8 @@ func (c *colorArt) findEdgeColor() Color {
 
 			nextProposedEntry := e
 			// make sure second choice is 30% as common as first choice
-			if float32(nextProposedEntry.Count)/float32(proposedEntry.Count) > 0.3 {
-				nextProposedColor := rgbToColor(nextProposedEntry.Color)
+			if float32(nextProposedEntry.count)/float32(proposedEntry.count) > 0.3 {
+				nextProposedColor := rgbToColor(nextProposedEntry.color)
 				if !nextProposedColor.isBlackOrWhite() {
 					proposedColor = nextProposedColor
 					break
@@ -161,4 +152,14 @@ func (c *colorArt) findEdgeColor() Color {
 	}
 
 	return proposedColor
+}
+
+func minMax(n, min, max int) int {
+	if n >= min && n <= max {
+		return n
+	} else if n < min {
+		return min
+	} else {
+		return max
+	}
 }
